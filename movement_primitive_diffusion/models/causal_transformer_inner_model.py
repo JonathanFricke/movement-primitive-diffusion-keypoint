@@ -6,6 +6,8 @@ from typing import Optional, Tuple, Dict, List
 
 from movement_primitive_diffusion.networks.sigma_embeddings import SIGMA_EMBEDDINGS
 
+from omni.isaac.lab.utils.math import quat_from_matrix
+
 
 # Adapted from https://github.com/columbia-ai-robotics/diffusion_policy/blob/main/diffusion_policy/model/diffusion/transformer_for_diffusion.py
 class CausalTransformer(torch.nn.Module):
@@ -46,9 +48,11 @@ class CausalTransformer(torch.nn.Module):
         # Linear layer for action embedding
         self.action_embedding = torch.nn.Linear(action_size, embedding_size)
 
+        print(f"state_size: {state_size}")
         # Learnable vectors for positional encoding of action and state & sigma
-        self.condition_position_embedding = torch.nn.Parameter(torch.zeros(1, condition_time_steps, embedding_size))
-        self.position_embedding = torch.nn.Parameter(torch.zeros(1, action_time_steps, embedding_size))
+        self.condition_position_embedding = torch.nn.Parameter(torch.randn(1, condition_time_steps, embedding_size) * 0.02)
+        self.position_embedding = torch.nn.Parameter(torch.randn(1, action_time_steps, embedding_size) * 0.02)
+        self.category_embedding = torch.nn.Parameter(torch.randn(1, 3+2*10+1, embedding_size) * 0.02)
 
         # Encoder
         if n_cond_layers > 0:
@@ -105,9 +109,18 @@ class CausalTransformer(torch.nn.Module):
         else:
             self.register_buffer("memory_mask", None)
 
+        print(f"action_size: {action_size}")
+
         # Decoder head
         self.ln_f = torch.nn.LayerNorm(embedding_size)
         self.head = torch.nn.Linear(embedding_size, action_size)
+        # self.head = torch.nn.Linear(embedding_size, action_size+2)  # +2 quat->ortho6d
+
+        # self.head_0 = torch.nn.Linear(embedding_size, 3)
+        # self.head_1 = torch.nn.Linear(embedding_size, 4)
+        # self.head_2 = torch.nn.Linear(embedding_size, 2)
+
+        # torch.nn.LayerNorm()
 
         # Init
         self.apply(self._init_weights)
@@ -124,16 +137,18 @@ class CausalTransformer(torch.nn.Module):
             torch.nn.Sequential,
         ) + SIGMA_EMBEDDINGS
 
-        if isinstance(module, (torch.nn.Linear, torch.nn.Embedding)):
+        if isinstance(module, (torch.nn.Embedding)):
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
-            if isinstance(module, torch.nn.Linear) and module.bias is not None:
+        if isinstance(module, torch.nn.Linear):
+            torch.nn.init.xavier_normal_(module.weight)
+            if module.bias is not None:
                 torch.nn.init.zeros_(module.bias)
         elif isinstance(module, torch.nn.MultiheadAttention):
             weight_names = ["in_proj_weight", "q_proj_weight", "k_proj_weight", "v_proj_weight"]
             for name in weight_names:
                 weight = getattr(module, name)
                 if weight is not None:
-                    torch.nn.init.normal_(weight, mean=0.0, std=0.02)
+                    torch.nn.init.kaiming_normal_(weight, nonlinearity='relu')
 
             bias_names = ["in_proj_bias", "bias_k", "bias_v"]
             for name in bias_names:
@@ -147,6 +162,8 @@ class CausalTransformer(torch.nn.Module):
             torch.nn.init.normal_(module.position_embedding, mean=0.0, std=0.02)
             if module.condition_embedding is not None:
                 torch.nn.init.normal_(module.condition_position_embedding, mean=0.0, std=0.02)
+            if module.category_embedding is not None:
+                torch.nn.init.normal_(module.category_embedding, mean=0.0, std=0.02)
         elif isinstance(module, ignore_types):
             # no param
             pass
@@ -187,6 +204,7 @@ class CausalTransformer(torch.nn.Module):
         no_decay.add("position_embedding")
         if self.condition_position_embedding is not None:
             no_decay.add("condition_position_embedding")
+        no_decay.add("category_embedding")
 
         # validate that we considered every parameter
         param_dict = {pn: p for pn, p in self.named_parameters()}
@@ -241,14 +259,33 @@ class CausalTransformer(torch.nn.Module):
         # Embed sigma
         # (B, 1, embedding_size)
         sigma_embedding = self.sigma_embedding(sigma.view(minibatch_size, -1)).unsqueeze(1)
+        print(f"state: {state.shape}")
+
+        if False:
+            state_f = Base2FourierFeatures(start=6, stop=8, step=1)(state)
+            print(f"state_f: {state_f.shape}")
+            state = torch.concat([state, state_f], dim=-2)
+
+        print(f"state: {state.shape}")
 
         # Encoder
         # (B, t_obs, embedding_size)
         condition_embedding = self.condition_embedding(state)
         # (B, condition_time_steps, embedding_size)
         condition_embedding = torch.cat([sigma_embedding, condition_embedding], dim=1)
+        print(f"condition_embedding: {condition_embedding.shape}")
 
-        x = self.drop(condition_embedding + self.condition_position_embedding)
+        # Cat(sigma, (time)*#tokens)
+        indices = torch.cat([torch.tensor([0], device="cuda"), torch.arange(1, self.condition_position_embedding.shape[1], device="cuda").repeat(3+2*10)])
+        condition_position_embedding = self.condition_position_embedding[:, indices, :]
+        print(f"condition_position_embedding: {condition_position_embedding.shape}")
+
+        # Cat(sigma, (tokens)*time)
+        indices = torch.cat([torch.tensor([0], device="cuda"), torch.arange(1, self.category_embedding.shape[1], device="cuda").repeat_interleave(3)])
+        category_embedding = self.category_embedding[:, indices, :]
+        print(f"category_embedding: {category_embedding.shape}")
+
+        x = self.drop(condition_embedding + condition_position_embedding + category_embedding)
         x = self.encoder(x)
 
         # (B, condition_time_steps, embedding_size)
@@ -258,11 +295,133 @@ class CausalTransformer(torch.nn.Module):
         token_embeddings = action_embedding
         # (B, action_time_steps, embedding_size)
         x = self.drop(token_embeddings + self.position_embedding)
+        
         # (B, action_time_steps, embedding_size)
         x = self.decoder(tgt=x, memory=memory, tgt_mask=self.mask, memory_mask=self.memory_mask)
 
         # head
         x = self.ln_f(x)
         x = self.head(x)
-        # (B, action_time_steps, action_size)
+
+        # pos = x[:,:,:3]
+        # ortho6d = x[:,:,3:9]
+        # gripper = x[:,:,9:]
+
+        # rot_matrix = compute_rotation_matrix_from_ortho6d_torch(ortho6d)
+        # rot_matrix = rot_matrix.flatten(-2,-1)
+        # print(f"rot_matrix: {rot_matrix.shape}")
+        # # quat = quat_from_matrix(rot_matrix)
+        # x = torch.cat([pos, rot_matrix, gripper], dim=-1)
+
+
+        # x0 = self.head_0(x)
+        # x1 = self.head_1(x)
+        # x2 = self.head_2(x)
+        # x = torch.cat([x0, x1, x2], dim=-1)
+        # # (B, action_time_steps, action_size)
+        # x = torch.cat([x0, x1, x2], dim=-1)
         return x
+
+
+# batch*n
+def normalize_vector( v, return_mag =False):
+    batch=v.shape[0]
+    time=v.shape[1]
+    v_mag = torch.sqrt(v.pow(2).sum(2))# batch
+    v_mag = torch.max(v_mag, torch.autograd.Variable(torch.FloatTensor([1e-8]).cuda()))
+    v_mag = v_mag.view(batch,time,1).expand(batch,time,v.shape[2])
+    v = v/v_mag
+    if(return_mag==True):
+        return v, v_mag[:,:,0]
+    else:
+        return v
+
+
+class Base2FourierFeatures(torch.nn.Module):
+    def __init__(self, start=0, stop=8, step=1):
+        super(Base2FourierFeatures, self).__init__()
+        self.start = start
+        self.stop = stop
+        self.step = step
+
+    def forward(self, inputs):
+        # Determine device and dtype from the input
+        device = inputs.device
+        dtype = inputs.dtype
+
+        # Create frequency values
+        freqs = list(range(self.start, self.stop, self.step))
+        freqs_tensor = torch.tensor(freqs, dtype=dtype, device=device)
+
+        print(f"inputs: {inputs.shape}")
+        print(f"freqs_tensor: {freqs_tensor.shape}")
+
+        # Compute Fourier weights: 2**freqs * 2π
+        w = (2.0 ** freqs_tensor) * (2 * torch.pi)
+        print(f"w: {w}")
+        # Reshape and tile so that w has shape (1, len(freqs) * inputs.shape[-1])
+        w = w.unsqueeze(1).unsqueeze(0).repeat(inputs.shape)
+
+        # Repeat each element in the input len(freqs) times along the last dimension
+        h = inputs.repeat_interleave(len(freqs), dim=-2)
+        print(f"w: {w.shape}")
+        print(f"h: {h.shape}")
+        h = w * h
+
+        # Concatenate sine and cosine features
+        out = torch.cat([torch.sin(h), torch.cos(h)], dim=-2)
+        return out
+
+# u, v batch*n
+def cross_product( u, v):
+    batch = u.shape[0]
+    time = u.shape[1]
+    #print (u.shape)
+    #print (v.shape)
+    i = u[:,:,1]*v[:,:,2] - u[:,:,2]*v[:,:,1]
+    j = u[:,:,2]*v[:,:,0] - u[:,:,0]*v[:,:,2]
+    k = u[:,:,0]*v[:,:,1] - u[:,:,1]*v[:,:,0]
+        
+    out = torch.cat((i.view(batch,time,1), j.view(batch,time,1), k.view(batch,time,1)),2)#batch,T,*3
+        
+    return out
+
+
+def compute_rotation_matrix_from_ortho6d(ortho6d):
+    x_raw = ortho6d[:,:,0:3]#batch,T,*3
+    y_raw = ortho6d[:,:,3:6]#batch,T,*3
+        
+    print(f"x_raw: {x_raw.shape}")
+    x = normalize_vector(x_raw) #batch,T,*3
+    print(f"x: {x.shape}")
+    z = cross_product(x,y_raw) #batch,T,*3
+    z = normalize_vector(z)#batch,T,*3
+    y = cross_product(z,x)#batch,T,*3
+
+    batch = x.shape[0]
+    time = x.shape[1]
+        
+    x = x.view(batch,time,3,1)
+    y = y.view(batch,time,3,1)
+    z = z.view(batch,time,3,1)
+    matrix = torch.cat((x,y,z), 3) #batch*3*3
+    return matrix
+
+
+def compute_rotation_matrix_from_ortho6d_torch(ortho6d):
+    x_raw = ortho6d[:,:,0:3]#batch,T,*3
+    y_raw = ortho6d[:,:,3:6]#batch,T,*3
+        
+    x = torch.nn.functional.normalize(x_raw, dim=-1) #batch,T,*3
+    z = torch.cross(x, y_raw, -1) #batch,T,*3
+    z = torch.nn.functional.normalize(z, dim=-1)#batch,T,*3
+    y = torch.cross(z, x, -1)#batch,T,*3
+
+    batch = x.shape[0]
+    time = x.shape[1]
+        
+    x = x.view(batch,time,3,1)
+    y = y.view(batch,time,3,1)
+    z = z.view(batch,time,3,1)
+    matrix = torch.cat((x,y,z), -1) #batch,T*3*3
+    return matrix

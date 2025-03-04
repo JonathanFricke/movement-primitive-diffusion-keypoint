@@ -1,0 +1,6 @@
+_target_: movement_primitive_diffusion.workspaces.dummy_workspace.DummyWorkspace
+_recursive_: False
+
+env_config:
+  scaler_config:
+    scaler_values: null

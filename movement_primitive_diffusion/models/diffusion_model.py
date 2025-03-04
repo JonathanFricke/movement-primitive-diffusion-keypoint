@@ -54,6 +54,22 @@ class DiffusionModel(BaseModel):
         else:
             return loss
 
+
+    def geodesic_distance_matrices(self, m1, m2):
+        batch=m1.shape[0]
+        time=m1.shape[1]
+        m = torch.bmm(m1, m2.transpose(-2,-1)) #batch*3*3
+        
+        cos = (  m[:,:,0,0] + m[:,:,1,1] + m[:,:,2,2] - 1)/2
+        cos = torch.min(cos, torch.autograd.Variable(torch.ones(batch, time).cuda()))
+        cos = torch.max(cos, torch.autograd.Variable(torch.ones(batch, time).cuda())*-1)
+        
+        theta = torch.acos(cos)
+        #theta = torch.min(theta, 2*np.pi - theta)
+        
+        return theta
+
+
     def forward(self, state: torch.Tensor, noised_action: torch.Tensor, sigma: torch.Tensor, extra_inputs: Dict) -> torch.Tensor:
         """
         Forward pass of the model, applying the noise levels to the input

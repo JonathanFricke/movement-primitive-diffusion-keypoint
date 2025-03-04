@@ -209,8 +209,8 @@ class DiscreteTimeDiffusionAgent(BaseAgent):
             eval_loss = (model_output - target).pow(2).flatten().mean()
 
             # Calculate the L2 error of the first and last action of the sequence
-            start_point_deviation = torch.linalg.norm(action[:, 0, :] - denoised_action[:, 0, :], dim=-1).mean()
-            end_point_deviation = torch.linalg.norm(action[:, -1, :] - denoised_action[:, -1, :], dim=-1).mean()
+            start_point_deviation = torch.linalg.norm(action[:, 0, :3] - denoised_action[:, 0, :3], dim=-1).mean()
+            end_point_deviation = torch.linalg.norm(action[:, -1, :3] - denoised_action[:, -1, :3], dim=-1).mean()
 
         # Load back the original weights
         if self.use_ema:

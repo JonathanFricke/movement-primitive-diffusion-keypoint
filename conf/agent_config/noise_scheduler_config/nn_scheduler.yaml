@@ -1,0 +1,2 @@
+_target_: movement_primitive_diffusion.noise_schedulers.NNScheduler
+_recursive_: False

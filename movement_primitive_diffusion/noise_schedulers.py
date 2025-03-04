@@ -71,6 +71,104 @@ class LinearNoiseScheduler(NoiseScheduler):
             return sigmas
 
 
+class NNScheduler(NoiseScheduler, torch.nn.Module):
+    def __init__(self, dtype=torch.float32, append_zero: bool = True):
+        super().__init__(dtype)
+        self.append_zero = append_zero
+
+        self.lin1 = DenseMonotone(1, 1)
+        self.lin2 = DenseMonotone(1, 256)
+        self.lin3 = DenseMonotone(256, 1, bias=False)
+        
+    def _init_weights(self, module):
+        if isinstance(module, torch.nn.Linear):
+            torch.nn.init.xavier_normal_(module.weight)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+
+    def get_sigmas(self, n):
+        """Constructs an exponential noise schedule."""
+        # sigmas = torch.linspace(math.log(self.sigma_max), math.log(self.sigma_min), n, dtype=self.dtype).exp()
+        # if self.append_zero:
+        #     return append_zero(sigmas)
+        # else:
+        #     return sigmas
+        sigmas = self.lin1(n)
+
+        if True:
+            sigmas_ = 2. * (n - .5)  # scale input to [-1, +1]
+            sigmas_ = self.lin2(sigmas_)
+            sigmas_ = 2 * (torch.nn.Sigmoid(sigmas_) - .5)  # more stable than jnp.tanh(h)
+            sigmas_ = self.lin3(sigmas_) / self.n_features
+            sigmas += sigmas_
+        return sigmas
+
+
+        # sigmas = self.encoder(n)
+        # if self.append_zero:
+        #     return append_zero(sigmas)
+        # else:
+        #     return sigmas
+
+
+class DenseMonotone(torch.nn.Module):
+    """
+    Strictly increasing Dense layer.
+    
+    This layer behaves like a fully-connected (linear) layer but forces the weight matrix
+    to be nonnegative (by taking its absolute value) during the forward pass.
+    """
+    def __init__(self, in_features, out_features, bias=True, 
+                 kernel_init=None, bias_init=None, dtype=torch.float32):
+        """
+        Args:
+            in_features (int): Size of each input sample.
+            out_features (int): Size of each output sample.
+            bias (bool): If set to False, the layer will not learn an additive bias.
+            kernel_init (callable, optional): A function to initialize the weight matrix.
+            bias_init (callable, optional): A function to initialize the bias.
+            dtype (torch.dtype): Data type for the parameters.
+        """
+        super(DenseMonotone, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.use_bias = bias
+        self.dtype = dtype
+
+        # Initialize weight parameter.
+        # We create an uninitialized parameter and then apply the initializer.
+        self.weight = torch.nn.Parameter(torch.empty(in_features, out_features, dtype=self.dtype))
+        if kernel_init is not None:
+            kernel_init(self.weight)
+        else:
+            # Default initializer similar to Kaiming uniform.
+            torch.nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+
+        # Initialize bias parameter if needed.
+        if self.use_bias:
+            self.bias = torch.nn.Parameter(torch.empty(out_features, dtype=self.dtype))
+            if bias_init is not None:
+                bias_init(self.bias)
+            else:
+                # Default initialization for bias.
+                fan_in, _ = torch.nn.init._calculate_fan_in_and_fan_out(self.weight)
+                bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+                torch.nn.init.uniform_(self.bias, -bound, bound)
+        else:
+            self.register_parameter('bias', None)
+
+    def forward(self, inputs):
+        # Ensure inputs are in the correct dtype.
+        inputs = inputs.to(self.dtype)
+        # Enforce non-negativity on the kernel weights.
+        weight = torch.abs(self.weight)
+        # Standard linear operation: dot-product of inputs and kernel.
+        y = torch.matmul(inputs, weight)
+        if self.use_bias:
+            y = y + self.bias.to(self.dtype)
+        return y
+
+
 class CosineNoiseScheduler(NoiseScheduler):
     def __init__(self, s=0.008, dtype=torch.float32, append_zero: bool = True):
         super().__init__(dtype)
@@ -97,7 +195,7 @@ class CosineNoiseScheduler(NoiseScheduler):
             return append_zero(sigmas)
         else:
             return sigmas
-
+        
 
 class VENoiseScheduler(NoiseScheduler):
     def __init__(self, sigma_min: float, sigma_max: float, dtype=torch.float32, append_zero: bool = True):

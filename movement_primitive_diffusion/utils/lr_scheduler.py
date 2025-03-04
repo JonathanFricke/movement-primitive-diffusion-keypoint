@@ -1,4 +1,8 @@
-from diffusers.optimization import Union, SchedulerType, Optional, Optimizer, TYPE_TO_SCHEDULER_FUNCTION
+from typing import Union, Optional
+
+from transformers import SchedulerType
+from transformers import get_scheduler as huggingface_get_scheduler
+from torch.optim import Optimizer
 
 
 def get_scheduler(
@@ -6,6 +10,8 @@ def get_scheduler(
     optimizer: Optimizer,
     num_warmup_steps: Optional[int] = None,
     num_training_steps: Optional[int] = None,
+    warmup_proportion: Optional[float] = None,
+    use_proportional_warmup: Optional[bool] = None,
     **kwargs,
 ):
     """Added kwargs vs diffuser's original implementation
@@ -23,19 +29,25 @@ def get_scheduler(
             schedulers (hence the argument being optional), the function will raise an error if it's unset and the scheduler type requires it.
     """
     name = SchedulerType(name)
-    schedule_func = TYPE_TO_SCHEDULER_FUNCTION[name]
     if name == SchedulerType.CONSTANT:
-        return schedule_func(optimizer, **kwargs)
+        return huggingface_get_scheduler(name=name, optimizer=optimizer, **kwargs)
+
+    if use_proportional_warmup:
+        if warmup_proportion is None:
+            raise ValueError(
+                "Can't use proportional warmup without specifying `warmup_proportion`."
+            )
+        num_warmup_steps = int(warmup_proportion * num_training_steps)
 
     # All other schedulers require `num_warmup_steps`
     if num_warmup_steps is None:
         raise ValueError(f"{name} requires `num_warmup_steps`, please provide that argument.")
 
     if name == SchedulerType.CONSTANT_WITH_WARMUP:
-        return schedule_func(optimizer, num_warmup_steps=num_warmup_steps, **kwargs)
+        return huggingface_get_scheduler(name=name, optimizer=optimizer, num_warmup_steps=num_warmup_steps, **kwargs)
 
     # All other schedulers require `num_training_steps`
     if num_training_steps is None:
         raise ValueError(f"{name} requires `num_training_steps`, please provide that argument.")
 
-    return schedule_func(optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=num_training_steps, **kwargs)
+    return huggingface_get_scheduler(name=name, optimizer=optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=num_training_steps, **kwargs)

@@ -81,13 +81,14 @@ class ProcessBatch:
             dims = {key: observation[key].ndim for key in self.observation_keys}
             raise ValueError(f"Observation should have at least 2 dimensions for batch size and t_obs. Got {dims}")
 
-        # Make sure t_obs is consistent for all tensors
-        if not all([observation[key].shape[1] == self.t_obs for key in self.observation_keys]):
-            lens = {key: observation[key].shape[1] for key in self.observation_keys}
-            raise ValueError(f"Observation has wrong number of time steps. Expected {self.t_obs}, got {lens}")
+        # # Make sure t_obs is consistent for all tensors
+        # if not all([observation[key].shape[1] == self.t_obs for key in self.observation_keys]):
+        #     lens = {key: observation[key].shape[1] for key in self.observation_keys}
+        #     raise ValueError(f"Observation has wrong number of time steps. Expected {self.t_obs}, got {lens}")
+
 
         # Filter out the keys that are not needed
-        processed_observation = {key: observation[key] for key in self.observation_keys}
+        processed_observation = {key: observation[key][:,-self.t_obs:,...] for key in self.observation_keys}
 
         extra_inputs = {}
 
