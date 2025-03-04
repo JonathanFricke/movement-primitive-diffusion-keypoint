@@ -56,6 +56,8 @@ pip install -e ./dependencies/MP_PyTorch
 4. Install the `movement_primitive_diffusion` package
 ```bash
 pip install -e .
+pip install omegaconf
+pip install transformers
 ```
 
 5. (Optional) To track your experiments with wandb, log into wandb.
