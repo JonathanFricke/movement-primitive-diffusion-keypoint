@@ -1,6 +1,7 @@
 # @package _global_
 defaults:
   - train_defaults
+  - slurm_dev
   - /agent_config: diffusion_policy_transformer_agent
   - process_batch_config: defaults
   - encoder_config: state_passthrough

@@ -2,6 +2,7 @@
 defaults:
   - dataset_config: dataset
   - workspace_config: dummy
+  - override /hydra/launcher: submitit_slurm
   - _self_
 
 # Set what should be used to determine if model performance increased in testing in environment
@@ -24,7 +25,7 @@ data_loader_config:
   shuffle: True
   pin_memory: False
   num_workers: 0
-  batch_size: 256
+  batch_size: 512
 
  # Note: can be null, so training is only stopped by early_stopping
 epochs: 1000 # unet lowdim: 5000, unet video: 1500, unet hybrid: 3000, unet real img: 600
@@ -41,9 +42,24 @@ group_from_overrides: False
 name_from_overrides: True
 ignore_in_name:
   - group
+  - masterthesis
 
 wandb:
   entity: ucioq-karlsruhe-institute-of-technology
   project: masterthesis_mpd_3dtracking
   group: transformer_diffusion
   mode: online # online, offline, disabled
+
+# hydra:
+#   mode: MULTIRUN  # needed for launcher to be used
+#   sweeper:
+#     params:
+#       +seed: 0, 42, 821
+#   launcher:
+#     # launcher/cluster specific options
+#     partition: "dev_gpu_4"
+#     timeout_min: 30 # in minutes, maximum time on this queue
+#     gres: gpu:3  # one gpu allocated
+#     mem_per_gpu: 94000  # in MB
+#     additional_parameters:
+#       cpus-per-task: 4  # maybe more?

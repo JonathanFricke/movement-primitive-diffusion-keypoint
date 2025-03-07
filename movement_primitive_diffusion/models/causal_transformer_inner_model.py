@@ -6,7 +6,7 @@ from typing import Optional, Tuple, Dict, List
 
 from movement_primitive_diffusion.networks.sigma_embeddings import SIGMA_EMBEDDINGS
 
-from omni.isaac.lab.utils.math import quat_from_matrix
+# from omni.isaac.lab.utils.math import quat_from_matrix
 
 
 # Adapted from https://github.com/columbia-ai-robotics/diffusion_policy/blob/main/diffusion_policy/model/diffusion/transformer_for_diffusion.py
