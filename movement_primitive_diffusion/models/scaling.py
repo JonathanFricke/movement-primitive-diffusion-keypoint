@@ -26,8 +26,8 @@ class KarrasScaling(Scaling, torch.nn.Module):
         if self.sigma_data is None:
             raise RuntimeError("Sigma data must be set before calling KarrasScaling")
         c_skip = self.sigma_data**2 / (sigma**2 + self.sigma_data**2)
-        c_out = sigma * self.sigma_data / (sigma**2 + self.sigma_data**2) ** 0.5
-        c_in = 1.0 / (sigma**2 + self.sigma_data**2) ** 0.5
+        c_out = sigma * self.sigma_data / (sigma**2 + self.sigma_data**2).sqrt()
+        c_in = 1.0 / (sigma**2 + self.sigma_data**2).sqrt()
         c_noise = torch.log(sigma) / 4.0
 
         return c_skip, c_out, c_in, c_noise
