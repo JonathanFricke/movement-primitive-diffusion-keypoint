@@ -32,9 +32,9 @@ class ConcatenateAggregator_(Aggregator):
             tensor([[1, 2, 3], [4, 5, 6]])
         """
 
-        for encoding in encodings.values():
-            # B T emb
-            print(f"encodings: {encoding.shape}")
+        # for encoding in encodings.values():
+        #     # B T emb
+        #     print(f"encodings: {encoding.shape}")
 
         encodings_padded = [pad_to_max(t, 4) for t in list(encodings.values())]
         encodings_cat = torch.cat(encodings_padded, dim=-2)

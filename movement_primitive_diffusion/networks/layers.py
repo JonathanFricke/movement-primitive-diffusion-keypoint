@@ -11,7 +11,7 @@ class PassThrough(torch.nn.Module):
     """Passes the input through unchanged."""
 
     def forward(self, x: Tensor) -> Tensor:
-        print(f"PassThrough x: {x.shape}")
+        # print(f"PassThrough x: {x.shape}")
         return x
 
     def out_shape(self, in_shape: List[int]) -> List[int]:
@@ -22,10 +22,10 @@ class PointEncoder(torch.nn.Module):
     """Passes the input through unchanged."""
 
     def forward(self, x: Tensor) -> Tensor:
-        print(f"Pre  PointEncoder x: {x.shape}")
+        # print(f"Pre  PointEncoder x: {x.shape}")
         # x = x.view(x.size(0), x.size(1), -1)
         x = x.flatten(1,2)
-        print(f"Post PointEncoder x: {x.shape}")
+        # print(f"Post PointEncoder x: {x.shape}")
         return x
 
     def out_shape(self, in_shape: List[int]) -> List[int]:

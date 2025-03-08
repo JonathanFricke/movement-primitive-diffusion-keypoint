@@ -259,31 +259,31 @@ class CausalTransformer(torch.nn.Module):
         # Embed sigma
         # (B, 1, embedding_size)
         sigma_embedding = self.sigma_embedding(sigma.view(minibatch_size, -1)).unsqueeze(1)
-        print(f"state: {state.shape}")
+        # print(f"state: {state.shape}")
 
         if False:
             state_f = Base2FourierFeatures(start=6, stop=8, step=1)(state)
             print(f"state_f: {state_f.shape}")
             state = torch.concat([state, state_f], dim=-2)
 
-        print(f"state: {state.shape}")
+        # print(f"state: {state.shape}")
 
         # Encoder
         # (B, t_obs, embedding_size)
         condition_embedding = self.condition_embedding(state)
         # (B, condition_time_steps, embedding_size)
         condition_embedding = torch.cat([sigma_embedding, condition_embedding], dim=1)
-        print(f"condition_embedding: {condition_embedding.shape}")
+        # print(f"condition_embedding: {condition_embedding.shape}")
 
         # Cat(sigma, (time)*#tokens)
         indices = torch.cat([torch.tensor([0], device="cuda"), torch.arange(1, self.condition_position_embedding.shape[1], device="cuda").repeat(3+2*10)])
         condition_position_embedding = self.condition_position_embedding[:, indices, :]
-        print(f"condition_position_embedding: {condition_position_embedding.shape}")
+        # print(f"condition_position_embedding: {condition_position_embedding.shape}")
 
         # Cat(sigma, (tokens)*time)
         indices = torch.cat([torch.tensor([0], device="cuda"), torch.arange(1, self.category_embedding.shape[1], device="cuda").repeat_interleave(3)])
         category_embedding = self.category_embedding[:, indices, :]
-        print(f"category_embedding: {category_embedding.shape}")
+        # print(f"category_embedding: {category_embedding.shape}")
 
         x = self.drop(condition_embedding + condition_position_embedding + category_embedding)
         x = self.encoder(x)
