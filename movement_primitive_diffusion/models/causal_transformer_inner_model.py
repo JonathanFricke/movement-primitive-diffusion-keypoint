@@ -148,7 +148,7 @@ class CausalTransformer(torch.nn.Module):
             for name in weight_names:
                 weight = getattr(module, name)
                 if weight is not None:
-                    torch.nn.init.kaiming_normal_(weight, nonlinearity='relu')
+                    torch.nn.init.xavier_normal_(weight)
 
             bias_names = ["in_proj_bias", "bias_k", "bias_v"]
             for name in bias_names:
