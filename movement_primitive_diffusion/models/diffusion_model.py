@@ -93,6 +93,7 @@ class DiffusionModel(BaseModel):
 
         return denoised_action
 
+
 class DiffusionModelEDM(BaseModel):
     def __init__(
         self,

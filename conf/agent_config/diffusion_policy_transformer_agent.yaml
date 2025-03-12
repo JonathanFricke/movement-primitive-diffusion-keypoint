@@ -5,8 +5,8 @@ _recursive_: False
 defaults:
   - sigma_distribution_config: rand_log_logistic
   - model_config: diffusion_model
-  - sampler_config: euler_ancestral
-  - noise_scheduler_config: cosine_scheduler
+  - sampler_config: euler
+  - noise_scheduler_config: exponential_scheduler
   - override model_config/inner_model_config: transformer
   - override model_config/scaling_config: trajectory_karras_scaling
   - _self_
@@ -23,7 +23,7 @@ device: null  # set in python based on main config
 # num_inference_steps: 100 # either 100 or 8 in Diffusion Policy configs. If none -> takes the num_training_steps from the noise_scheduler_config
 diffusion_steps: 8
 sigma_min: 0.05
-sigma_max: 10.0
+sigma_max: 80.0
 
 t_obs: ${t_obs}
 predict_past: ${predict_past}
