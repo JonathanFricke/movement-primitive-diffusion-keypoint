@@ -1,13 +1,14 @@
 hydra:
   mode: MULTIRUN  # needed for launcher to be used
-  # sweeper:
-  #   params:
-  #     +seed: 0, 42, 821
+  sweeper:
+    params:
+      +seed: 0
+      agent_config.model_config.inner_model_config.embedding_size: 256, 512
   launcher:
     # launcher/cluster specific options
     partition: "dev_gpu_4"
     timeout_min: 30 # in minutes, maximum time on this queue
     gres: gpu:1  # one gpu allocated
-    mem_per_gpu: 94000  # in MB
+    mem_per_gpu: 32000  # in MB
     additional_parameters:
       cpus-per-task: 4  # maybe more?
