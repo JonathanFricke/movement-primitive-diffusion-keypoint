@@ -1,4 +1,3 @@
-# _target_: movement_primitive_diffusion.agents.discrete_time_diffusion_agent.DiscreteTimeDiffusionAgent
 _target_: movement_primitive_diffusion.agents.diffusion_agent.DiffusionAgent
 _recursive_: False
 

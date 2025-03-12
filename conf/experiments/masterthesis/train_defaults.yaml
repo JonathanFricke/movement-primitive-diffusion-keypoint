@@ -25,7 +25,7 @@ data_loader_config:
   shuffle: True
   pin_memory: False
   num_workers: 0
-  batch_size: 512
+  batch_size: 256
 
  # Note: can be null, so training is only stopped by early_stopping
 epochs: 1000 # unet lowdim: 5000, unet video: 1500, unet hybrid: 3000, unet real img: 600
@@ -36,7 +36,7 @@ early_stopping_warmup_epochs: 300
 early_stopping_patience: 5
 eval_in_env_after_epochs: 9999
 num_trajectories_in_env: null # 24 distinct ways through the obstacle course -> multimodality
-save_distance: 99999 # additionally to the best model, save model every n epochs
+save_distance: 50 # additionally to the best model, save model every n epochs
 
 group_from_overrides: False
 name_from_overrides: True
@@ -54,12 +54,12 @@ wandb:
 #   mode: MULTIRUN  # needed for launcher to be used
 #   sweeper:
 #     params:
-#       +seed: 0, 42, 821
+#       +seed: 2, 42, 821
 #   launcher:
 #     # launcher/cluster specific options
 #     partition: "dev_gpu_4"
-#     timeout_min: 30 # in minutes, maximum time on this queue
-#     gres: gpu:3  # one gpu allocated
-#     mem_per_gpu: 94000  # in MB
+#     timeout_min: 60 # in minutes, maximum time on this queue
+#     gres: gpu:1  # one gpu allocated
+#     mem_per_gpu: 32000  # in MB
 #     additional_parameters:
 #       cpus-per-task: 4  # maybe more?
