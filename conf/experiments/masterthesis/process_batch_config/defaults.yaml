@@ -9,10 +9,7 @@ predict_past: ${predict_past}
 
 # Note: the order matters here, because the action keys are concatenated
 action_keys:
-  - key: ee_pos
-    feature_size: null # set in python based on dataset
-
-  - key: ee_quat
+  - key: ee_triplet_3D
     feature_size: null # set in python based on dataset
 
   - key: action_gripper

@@ -9,15 +9,14 @@ keys:
   # - action_pos
   # - action_quat
   - action_gripper
-  - ee_pos
-  - ee_quat
+  - ee_triplet_3D
   - joint_pos
   # - goal_pos
   # - goal_quat
   # - grippable_pos
   # - grippable_quat
-  - can_tracked_3D_vis
-  - bowl_tracked_3D_vis
+  - can_tracked_3D
+  - bowl_tracked_3D
 
 dt: ${eval:"1.0/60.0"}
 
@@ -26,8 +25,7 @@ normalize_keys:
   # - action_pos
   # - action_quat
   - action_gripper
-  - ee_pos
-  # - ee_quat
+  - ee_triplet_3D
   - joint_pos
   # - goal_pos
   # - goal_quat
@@ -50,13 +48,9 @@ scaler_values:
     min: null
     max: null
 
-  ee_pos:
-    min: [0.0, -0.4, 0.0]
-    max: [0.7, 0.4, 0.6]
-    
-  # ee_quat:
-  #   min: null
-  #   max: null
+  ee_triplet_3D:
+    min: [[0.0, -0.4, 0.0], [0.0, -0.4, 0.0], [0.0, -0.4, 0.0]]
+    max: [[0.7, 0.4, 0.6], [0.7, 0.4, 0.6], [0.7, 0.4, 0.6]]
 
   joint_pos:
     min: null

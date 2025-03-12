@@ -8,15 +8,10 @@ t_obs: ${t_obs}
 # Most simple state based config just flattens out the time and concatenates all the values
 # Note: The order matters! The same order will be used in process_batch and the encoder
 network_configs:
-  - observation_key: ee_pos
+  - observation_key: ee_triplet_3D
     feature_size: null # set in python based on dataset
     network_config:
-      _target_: movement_primitive_diffusion.networks.layers.PassThrough
-
-  - observation_key: ee_quat
-    feature_size: null # set in python based on dataset
-    network_config:
-      _target_: movement_primitive_diffusion.networks.layers.PassThrough
+      _target_: movement_primitive_diffusion.networks.layers.PointEncoder
   
   - observation_key: joint_pos
     feature_size: null # set in python based on dataset

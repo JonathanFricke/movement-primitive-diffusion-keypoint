@@ -10,4 +10,4 @@ defaults:
 predict_past: False
 
 wandb:
-  group: dp-transformer
+  group: tomato_can_in_bowl_single_upright

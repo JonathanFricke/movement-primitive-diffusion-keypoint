@@ -19,7 +19,7 @@ predict_past: False
 train_split: 0.9
 dataset_fully_on_gpu: True
 
-trajectory_dir: tomato_can_in_bowl_from_sim_low_rand
+trajectory_dir: tomato_can_in_bowl_single_upright_from_sim
 
 data_loader_config:
   shuffle: True
