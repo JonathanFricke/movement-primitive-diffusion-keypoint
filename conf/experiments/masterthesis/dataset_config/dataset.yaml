@@ -16,8 +16,8 @@ keys:
   # - goal_quat
   # - grippable_pos
   # - grippable_quat
-  - can_tracked_3D
-  - bowl_tracked_3D
+  - can_tracked_3D_vis
+  - bowl_tracked_3D_vis
 
 dt: ${eval:"1.0/60.0"}
 
