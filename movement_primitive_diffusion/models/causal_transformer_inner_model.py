@@ -49,10 +49,11 @@ class CausalTransformer(torch.nn.Module):
         self.action_embedding = torch.nn.Linear(action_size, embedding_size)
 
         print(f"state_size: {state_size}")
+        self.num_obs_token = 4+2*10
         # Learnable vectors for positional encoding of action and state & sigma
         self.condition_position_embedding = torch.nn.Parameter(torch.randn(1, condition_time_steps, embedding_size) * 0.02)
         self.position_embedding = torch.nn.Parameter(torch.randn(1, action_time_steps, embedding_size) * 0.02)
-        self.category_embedding = torch.nn.Parameter(torch.randn(1, 3+2*10+1, embedding_size) * 0.02)
+        self.category_embedding = torch.nn.Parameter(torch.randn(1, self.num_obs_token+1, embedding_size) * 0.02)
 
         # Encoder
         if n_cond_layers > 0:
@@ -276,7 +277,7 @@ class CausalTransformer(torch.nn.Module):
         # print(f"condition_embedding: {condition_embedding.shape}")
 
         # Cat(sigma, (time)*#tokens)
-        indices = torch.cat([torch.tensor([0], device="cuda"), torch.arange(1, self.condition_position_embedding.shape[1], device="cuda").repeat(3+2*10)])
+        indices = torch.cat([torch.tensor([0], device="cuda"), torch.arange(1, self.condition_position_embedding.shape[1], device="cuda").repeat(self.num_obs_token)])
         condition_position_embedding = self.condition_position_embedding[:, indices, :]
         # print(f"condition_position_embedding: {condition_position_embedding.shape}")
 

@@ -6,11 +6,11 @@ subsequence_length: ${eval:'${t_obs}+${t_pred}-1'}
 trajectory_dirs: null # set in python code
 
 keys:
-  # - action_pos
-  # - action_quat
+  - ee_triplet_3D_0
+  - ee_triplet_3D_1
+  - ee_triplet_3D_2
+  - ee_gripper
   - action_gripper
-  - ee_triplet_3D
-  - joint_pos
   # - goal_pos
   # - goal_quat
   # - grippable_pos
@@ -22,11 +22,11 @@ dt: ${eval:"1.0/60.0"}
 
 target_dt: null
 normalize_keys:
-  # - action_pos
-  # - action_quat
+  - ee_triplet_3D_0
+  - ee_triplet_3D_1
+  - ee_triplet_3D_2
+  - ee_gripper
   - action_gripper
-  - ee_triplet_3D
-  - joint_pos
   # - goal_pos
   # - goal_quat
   # - grippable_pos
@@ -36,23 +36,23 @@ normalize_keys:
 normalize_symmetrically: True # False: normalized to [0, 1] instead of [-1, 1]
 standardize_keys: []
 scaler_values:
-  # action_pos:
-  #   min: null
-  #   max: null
+  ee_triplet_3D_0:
+    min: [0.0, -0.4, 0.0]
+    max: [0.7, 0.4, 0.6]
 
-  # action_quat:
-  #   min: null
-  #   max: null
+  ee_triplet_3D_1:
+    min: [0.0, -0.4, 0.0]
+    max: [0.7, 0.4, 0.6]
 
-  action_gripper:
+  ee_triplet_3D_2:
+    min: [0.0, -0.4, 0.0]
+    max: [0.7, 0.4, 0.6]
+
+  ee_gripper:
     min: null
     max: null
 
-  ee_triplet_3D:
-    min: [[0.0, -0.4, 0.0], [0.0, -0.4, 0.0], [0.0, -0.4, 0.0]]
-    max: [[0.7, 0.4, 0.6], [0.7, 0.4, 0.6], [0.7, 0.4, 0.6]]
-
-  joint_pos:
+  action_gripper:
     min: null
     max: null
 
