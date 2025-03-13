@@ -175,14 +175,11 @@ class DiffusionAgent(BaseAgent):
             eval_loss, denoised_action = self.model.loss(state, action, sigma, extra_inputs, return_denoised=True)
 
             # Calculate the L2 error of the first and last action of the sequence
-            start_point_deviation = torch.linalg.norm(action[:, 0, :3] - denoised_action[:, 0, :3], dim=-1).mean()
-            end_point_deviation = torch.linalg.norm(action[:, -1, :3] - denoised_action[:, -1, :3], dim=-1).mean()
+            start_point_deviation = torch.linalg.norm(action[:, 0, :9] - denoised_action[:, 0, :9], dim=-1).mean()
+            end_point_deviation = torch.linalg.norm(action[:, -1, :9] - denoised_action[:, -1, :9], dim=-1).mean()
 
-            start_rot_deviation = (1 - torch.abs(torch.sum(action[:, 0, 3:7] * denoised_action[:, 0, 3:7], dim=-1))).mean()
-            end_rot_deviation = (1 - torch.abs(torch.sum(action[:, -1, 3:7] * denoised_action[:, -1, 3:7], dim=-1))).mean()
-
-            start_gripper_deviation = torch.abs((action[:, 0, 7:9] - denoised_action[:, 0, 7:9])).mean()
-            end_gripper_deviation = torch.abs((action[:, -1, 7:9] - denoised_action[:, -1, 7:9])).mean()
+            start_gripper_deviation = torch.abs((action[:, 0, 9:11] - denoised_action[:, 0, 9:11])).mean()
+            end_gripper_deviation = torch.abs((action[:, -1, 9:11] - denoised_action[:, -1, 9:11])).mean()
 
         # Load back the original weights
         if self.use_ema:
@@ -191,8 +188,8 @@ class DiffusionAgent(BaseAgent):
 
         return eval_loss.item(), \
             start_point_deviation.item(), end_point_deviation.item(),  \
-            start_rot_deviation.item(), end_rot_deviation.item(), \
             start_gripper_deviation.item(), end_gripper_deviation.item()
+            # start_rot_deviation.item(), end_rot_deviation.item(), \
 
     def load_pretrained(self, path: Union[str, Path]):
         """Loads a pretrained model

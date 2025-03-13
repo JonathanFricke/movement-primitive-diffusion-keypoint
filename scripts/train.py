@@ -87,8 +87,8 @@ def main(cfg: DictConfig) -> float:
             val_losses = []
             start_point_deviations = []
             end_point_deviations = []
-            start_rot_deviations = []
-            end_rot_deviations = []
+            # start_rot_deviations = []
+            # end_rot_deviations = []
             start_gripper_deviations = []
             end_gripper_deviations = []
 
@@ -112,13 +112,13 @@ def main(cfg: DictConfig) -> float:
                         batch = dictionary_to_device(batch, cfg.device)
                     (val_loss_value, 
                      start_point_deviation, end_point_deviation, 
-                     start_rot_deviation, end_rot_deviation, 
+                    #  start_rot_deviation, end_rot_deviation, 
                      start_gripper_deviation, end_gripper_deviation) = agent.evaluate(batch)
                     val_losses.append(val_loss_value)
                     start_point_deviations.append(start_point_deviation)
                     end_point_deviations.append(end_point_deviation)
-                    start_rot_deviations.append(start_rot_deviation)
-                    end_rot_deviations.append(end_rot_deviation)
+                    # start_rot_deviations.append(start_rot_deviation)
+                    # end_rot_deviations.append(end_rot_deviation)
                     start_gripper_deviations.append(start_gripper_deviation)
                     end_gripper_deviations.append(end_gripper_deviation)
 
@@ -136,8 +136,8 @@ def main(cfg: DictConfig) -> float:
             mean_val_loss = sum(val_losses) / len(val_losses)
             mean_start_point_deviation = sum(start_point_deviations) / len(start_point_deviations)
             mean_end_point_deviation = sum(end_point_deviations) / len(end_point_deviations)
-            mean_start_rot_deviation = sum(start_rot_deviations) / len(start_rot_deviations)
-            mean_end_rot_deviation = sum(end_rot_deviations) / len(end_rot_deviations)
+            # mean_start_rot_deviation = sum(start_rot_deviations) / len(start_rot_deviations)
+            # mean_end_rot_deviation = sum(end_rot_deviations) / len(end_rot_deviations)
             mean_start_gripper_deviation = sum(start_gripper_deviations) / len(start_gripper_deviations)
             mean_end_gripper_deviation = sum(end_gripper_deviations) / len(end_gripper_deviations)
             epoch_info = {
@@ -146,8 +146,8 @@ def main(cfg: DictConfig) -> float:
                 "val_loss": mean_val_loss,
                 "start_point_deviation": mean_start_point_deviation,
                 "end_point_deviation": mean_end_point_deviation,
-                "start_rot_deviation": mean_end_rot_deviation,
-                "end_rot_deviation": mean_start_rot_deviation,
+                # "start_rot_deviation": mean_end_rot_deviation,
+                # "end_rot_deviation": mean_start_rot_deviation,
                 "start_gripper_deviation": mean_start_gripper_deviation,
                 "end_gripper_deviation": mean_end_gripper_deviation,
                 "lr": agent.optimizer.param_groups[0]["lr"],
