@@ -21,8 +21,8 @@ device: null  # set in python based on main config
 
 # num_inference_steps: 100 # either 100 or 8 in Diffusion Policy configs. If none -> takes the num_training_steps from the noise_scheduler_config
 diffusion_steps: 8
-sigma_min: 0.05
-sigma_max: 80.0
+sigma_min: 0.01
+sigma_max: 10.0
 
 t_obs: ${t_obs}
 predict_past: ${predict_past}

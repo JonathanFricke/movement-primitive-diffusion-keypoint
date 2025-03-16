@@ -60,6 +60,7 @@ class DiffusionAgent(BaseAgent):
 
         # Number of steps to integrate the differential equation
         self.diffusion_steps = diffusion_steps
+        print(f"diffusion_steps: {diffusion_steps}")
 
         # Min and max values for the sigmas used during inference
         # Note: In the config, we set the sigma_min and sigma_max values for sigma_distribution and noise_scheduler to be the same
@@ -178,8 +179,11 @@ class DiffusionAgent(BaseAgent):
             start_point_deviation = torch.linalg.norm(action[:, 0, :9] - denoised_action[:, 0, :9], dim=-1).mean()
             end_point_deviation = torch.linalg.norm(action[:, -1, :9] - denoised_action[:, -1, :9], dim=-1).mean()
 
-            start_gripper_deviation = torch.abs((action[:, 0, 9:11] - denoised_action[:, 0, 9:11])).mean()
-            end_gripper_deviation = torch.abs((action[:, -1, 9:11] - denoised_action[:, -1, 9:11])).mean()
+            start_rot_deviation = (1 - torch.abs(torch.sum(action[:, 0, 3:7] * denoised_action[:, 0, 3:7], dim=-1))).mean()
+            end_rot_deviation = (1 - torch.abs(torch.sum(action[:, -1, 3:7] * denoised_action[:, -1, 3:7], dim=-1))).mean()
+
+            start_gripper_deviation = torch.abs((action[:, 0, -2:] - denoised_action[:, 0, -2:])).mean()
+            end_gripper_deviation = torch.abs((action[:, -1, -2:] - denoised_action[:, -1, -2:])).mean()
 
         # Load back the original weights
         if self.use_ema:
