@@ -49,7 +49,13 @@ class CausalTransformer(torch.nn.Module):
         self.action_embedding = torch.nn.Linear(action_size, embedding_size)
 
         print(f"state_size: {state_size}")
-        self.num_obs_token = 4+2*10
+        ee_triplet = 3
+        ee_gripper = 1
+        num_obj = 2
+        num_keypoints = 10
+        self.num_obs_token = ee_triplet+ee_gripper+num_obj*num_keypoints
+
+        # self.num_obs_token = 1+2*10
         # Learnable vectors for positional encoding of action and state & sigma
         self.condition_position_embedding = torch.nn.Parameter(torch.randn(1, condition_time_steps, embedding_size) * 0.02)
         self.position_embedding = torch.nn.Parameter(torch.randn(1, action_time_steps, embedding_size) * 0.02)

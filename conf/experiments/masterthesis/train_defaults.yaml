@@ -25,7 +25,7 @@ data_loader_config:
   shuffle: True
   pin_memory: False
   num_workers: 0
-  batch_size: 256
+  batch_size: 64
 
  # Note: can be null, so training is only stopped by early_stopping
 epochs: 1000 # unet lowdim: 5000, unet video: 1500, unet hybrid: 3000, unet real img: 600
