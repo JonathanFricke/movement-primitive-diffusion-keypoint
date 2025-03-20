@@ -35,8 +35,9 @@ class ConcatenateAggregator_(Aggregator):
         # for encoding in encodings.values():
         #     # B T emb
         #     print(f"encodings: {encoding.shape}")
-
-        encodings_padded = [pad_to_max(t, 4) for t in list(encodings.values())]
+        max_input_len = max([t.size(-1) for t in list(encodings.values())])
+        
+        encodings_padded = [pad_to_max(t, max_input_len) for t in list(encodings.values())]
         encodings_cat = torch.cat(encodings_padded, dim=-2)
 
         return encodings_cat
@@ -48,4 +49,4 @@ class PassThroughAggregator(Aggregator):
 
 def pad_to_max(tensor, max_dim):
     pad_size = max_dim - tensor.shape[-1]
-    return torch.nn.functional.pad(tensor, (0, pad_size), value=0)  # Pad last dimension
+    return torch.nn.functional.pad(tensor, (0, pad_size), value=-1)  # Pad last dimension
