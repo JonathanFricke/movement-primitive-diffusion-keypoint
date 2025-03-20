@@ -48,12 +48,12 @@ network_configs:
   #   network_config:
   #     _target_: movement_primitive_diffusion.networks.layers.PassThrough
 
-  - observation_key: bowl_tracked_3D
+  - observation_key: can_tracked_3D_vis_rel
     feature_size: null # set in python based on dataset
     network_config:
       _target_: movement_primitive_diffusion.networks.layers.PointEncoder
 
-  - observation_key: can_tracked_3D
+  - observation_key: bowl_tracked_3D_vis_rel
     feature_size: null # set in python based on dataset
     network_config:
       _target_: movement_primitive_diffusion.networks.layers.PointEncoder

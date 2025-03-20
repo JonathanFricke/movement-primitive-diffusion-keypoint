@@ -10,4 +10,4 @@ defaults:
 predict_past: False
 
 wandb:
-  group: tomato_can_in_bowl_single_upright
+  group: tomato_can_in_bowl_single_upright_v2_24bit_depth_100_traj_rel
