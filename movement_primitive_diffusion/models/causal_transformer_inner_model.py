@@ -28,6 +28,8 @@ class CausalTransformer(torch.nn.Module):
     ) -> None:
         super().__init__()
 
+        self.t_obs = t_obs
+
         condition_time_steps = 1 + t_obs  # sigma + state
         action_time_steps = t_pred
         if predict_past:
@@ -288,7 +290,7 @@ class CausalTransformer(torch.nn.Module):
         # print(f"condition_position_embedding: {condition_position_embedding.shape}")
 
         # Cat(sigma, (tokens)*time)
-        indices = torch.cat([torch.tensor([0], device="cuda"), torch.arange(1, self.category_embedding.shape[1], device="cuda").repeat_interleave(3)])
+        indices = torch.cat([torch.tensor([0], device="cuda"), torch.arange(1, self.category_embedding.shape[1], device="cuda").repeat_interleave(self.t_obs)])
         category_embedding = self.category_embedding[:, indices, :]
         # print(f"category_embedding: {category_embedding.shape}")
 
